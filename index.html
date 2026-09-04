@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>متجر مملكتك</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#fff8fb;color:#222}
+header{background:#fff;position:sticky;top:0;z-index:20;border-bottom:1px solid #f0d9e1}.nav{max-width:1150px;margin:auto;padding:9px 16px;display:flex;align-items:center;gap:12px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:60px;height:60px;border-radius:50%;object-fit:cover}.brand h1{margin:0;color:#ad345a;font-size:24px}.brand small{color:#777}.actions{display:flex;gap:8px}.btn{border:0;border-radius:22px;padding:10px 14px;cursor:pointer}.cart{background:#ad345a;color:#fff}.admin{background:#f2dce4;color:#8e2848}
+.hero{max-width:1150px;margin:22px auto;padding:42px 20px;text-align:center;border-radius:25px;background:linear-gradient(135deg,#fff,#ffe8f0)}.hero h2{margin:0;color:#9e3154;font-size:32px}.hero p{color:#666}
+.categories{max-width:1150px;margin:20px auto;padding:0 16px;display:flex;gap:9px;flex-wrap:wrap;justify-content:center}.cat{border:1px solid #e3b9c7;background:#fff;color:#9e3154;padding:9px 15px;border-radius:22px;cursor:pointer}.cat.active{background:#ad345a;color:#fff}
+.products{max-width:1150px;margin:20px auto;padding:0 16px}.products h2{color:#9e3154;text-align:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{background:#fff;border:1px solid #f0d9e1;border-radius:18px;overflow:hidden;box-shadow:0 5px 18px #0000000b}.pic{height:255px;background:#faf0f4}.pic img{width:100%;height:100%;object-fit:cover}.info{padding:14px}.info h3{font-size:17px;margin:0 0 9px;min-height:42px}.price{font-weight:bold;color:#ad345a;font-size:19px}.unknown{color:#777;font-size:14px}.add{width:100%;border:0;background:#ad345a;color:#fff;padding:11px;border-radius:12px;margin-top:10px;cursor:pointer}
+footer{text-align:center;padding:35px;color:#777}.modal{display:none;position:fixed;inset:0;background:#0007;z-index:30;padding:18px}.box{background:#fff;max-width:650px;margin:25px auto;border-radius:20px;padding:22px;max-height:92vh;overflow:auto}.close{float:left;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
+.row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee}.qty button{border:0;background:#f3dce4;padding:5px 10px;border-radius:7px}
+input,textarea{width:100%;padding:12px;margin:6px 0 10px;border:1px solid #ddd;border-radius:10px;font-family:inherit}.whatsapp{width:100%;background:#25d366;color:#fff;border:0;padding:13px;border-radius:12px;font-size:17px;cursor:pointer}
+</style></head><body>
+<header><div class="nav"><div class="brand"><img class="logo" src="/images/logo.png"><div><h1>متجر مملكتك</h1><small>تسوقي بسهولة وبأسعار مناسبة</small></div></div>
+<div class="actions"><button class="btn admin" onclick="location.href='/admin.html'">⚙️ لوحة التحكم</button><button class="btn cart" onclick="openCart()">🛒 السلة <span id="count">0</span></button></div></div></header>
+<section class="hero"><h2>أهلاً بكِ في متجر مملكتك</h2><p>منتجات مختارة بعناية • أسعار مناسبة • توصيل سريع</p></section>
+<div class="categories" id="cats"></div><section class="products"><h2>منتجات متجر مملكتك</h2><div class="grid" id="grid"></div></section>
+<footer>© 2026 متجر مملكتك — للطلب والاستفسار عبر واتساب</footer>
+<div class="modal" id="modal"><div class="box"><button class="close" onclick="closeCart()">×</button><h2>🛒 سلة المشتريات</h2><div id="items"></div>
+<h3>المجموع: <span id="total">0</span> د.ع</h3><input id="name" placeholder="الاسم الكامل"><input id="phone" placeholder="رقم الهاتف"><textarea id="address" rows="3" placeholder="العنوان ومكان التوصيل"></textarea>
+<button class="whatsapp" onclick="sendWhatsApp()">إرسال الطلب عبر واتساب</button></div></div>
+<script>
+const WA="9647831174256"; let products=[],cart=[],filter="الكل";
+const money=n=>Number(n).toLocaleString("ar-IQ");
+async function load(){products=await fetch("/api/products").then(r=>r.json());renderCats();render();}
+function renderCats(){let cats=["الكل",...new Set(products.map(p=>p.cat))];document.getElementById("cats").innerHTML=cats.map(c=>`<button class="cat ${c===filter?"active":""}" onclick="setFilter(${JSON.stringify(c)})">${c}</button>`).join("")}
+function setFilter(c){filter=c;renderCats();render()}
+function render(){let list=filter==="الكل"?products:products.filter(p=>p.cat===filter);document.getElementById("grid").innerHTML=list.map(p=>`<div class="card"><div class="pic"><img src="/images/${encodeURIComponent(p.img)}" alt="${p.name}" onerror="this.style.opacity=.2"></div><div class="info"><h3>${p.name}</h3>${p.price?`<div class="price">${money(p.price)} د.ع</div>`:`<div class="unknown">السعر عند الطلب</div>`}<button class="add" onclick="add(${p.id})">أضف إلى السلة</button></div></div>`).join("");update()}
+function add(id){let x=cart.find(i=>i.id===id);if(x)x.qty++;else cart.push({id,qty:1});update();openCart()}
+function update(){document.getElementById("count").textContent=cart.reduce((s,i)=>s+i.qty,0)}
+function openCart(){document.getElementById("modal").style.display="block";let total=0;let el=document.getElementById("items");if(!cart.length){el.innerHTML='<div style="text-align:center;color:#888;padding:20px">السلة فارغة</div>';document.getElementById("total").textContent="0";return}el.innerHTML=cart.map(i=>{let p=products.find(x=>x.id===i.id);if(p.price)total+=p.price*i.qty;return `<div class="row"><div><b>${p.name}</b><br>${p.price?money(p.price)+" د.ع":"السعر عند الطلب"}</div><div class="qty"><button onclick="change(${i.id},-1)">−</button> ${i.qty} <button onclick="change(${i.id},1)">+</button></div></div>`}).join("");document.getElementById("total").textContent=money(total)}
+function closeCart(){document.getElementById("modal").style.display="none"} function change(id,d){let x=cart.find(i=>i.id===id);x.qty+=d;if(x.qty<=0)cart=cart.filter(i=>i.id!==id);update();openCart()}
+async function sendWhatsApp(){if(!cart.length)return alert("السلة فارغة");let name=document.getElementById("name").value.trim(),phone=document.getElementById("phone").value.trim(),address=document.getElementById("address").value.trim();if(!name||!phone||!address)return alert("يرجى إكمال الاسم ورقم الهاتف والعنوان");
+let lines=["طلب جديد من متجر مملكتك",""];cart.forEach(i=>{let p=products.find(x=>x.id===i.id);lines.push(p.name+" × "+i.qty+" = "+(p.price?money(p.price*i.qty)+" د.ع":"السعر عند الطلب"))});let total=cart.reduce((s,i)=>s+(products.find(p=>p.id===i.id).price||0)*i.qty,0);lines.push("","المجموع المعروف: "+money(total)+" د.ع","الاسم: "+name,"الهاتف: "+phone,"العنوان: "+address);
+await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,phone,address,items:cart,total})});window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(lines.join("\n")),"_blank")}
+load();
+</script></body></html>
